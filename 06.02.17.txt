@@ -1,0 +1,2163 @@
+Different data sets
+1) Structured - 	organising data in rows and columns
+		schema for this data
+		processing - SQL queries
+		storage - database	
+		e.g. - RDBMS tables
+
+2) Unstructured - 	schema less data
+		no fixed format
+		storage - txt, pdf, audio, video....
+		processing - ETL or preprocessing
+		e.g. PDF, WORD docs, Email body, 
+
+3) Semi Structured	property tags
+		storage - xml files
+		processing - preprocessing 
+		e.g. log files, sensors
+
+
+salespeople to customer -> one to many
+
+customer to salespeople -> one to one
+
+
+salespeople - data for sales person
+customer - each record represented the customer
+orders - mutiple orders placed by each customer
+
+1 salesperson -> can service muliple customers -> each customer -> can have multiple orders
+
+first document
+-----------
+snum : 1001
+sname : peel
+comm : 0.10
+city : London
+customer:[
+	(cnum:2001, 
+	cname:Hoffman, 
+	city:london, 
+	rating:100
+	orders
+		{
+		onum :3003
+		odate :1996-10-03
+		amt :767.19
+		}
+		{
+		onum :3015
+		odate :1996-11-03
+		amt : 1000
+		}
+
+	)
+	(
+	cnum:2006, 
+	cname:clemens, 
+	city:london, 
+	rating:100
+	)
+	]
+
+
+
+Hadoop cluster
+-----------
+1 GB of data - hadoop
+
+small chunks or smaller units are called blocks
+
+in hadoop 2.x block size = 128 MB
+
+cluster size = 30 datanodes
+
+1024 MB / 128 MB = 8 blocks
+
+each block would be replicated 2 more times - 24 blocks
+
+1 Gb = 3GB 
+abc.txt 
+
+Data node = 10-15 TB of HDD and RAM 32GB- 64GB
+
+metadata for abc.txt
+-----------------
+Block1 = DN1, DN20, DN25
+Block2 = DN3
+
+file = 200 MB
+block size = 128 MB
+
+block 1 = 128MB 
+block 2 = 72 MB
+
+
+Block information
+1. Block ID
+2. Block Pool ID
+3. generation stamp
+4. location - I.P.address
+5. owner
+
+
+
+129 MB =128 + 1
+
+storage = 15TB
+how many blocks can reside on this datanode ? 14x1024x1024/ 128
+
+File A = 200 MB = 128 + 72
+File B = 300 MB = 128 + 128 + 44
+
+
+Hadoop cluster space = 30 x 15TB = 450 TB
+
+if repl factor is 3 then actual storage 450/3 = 150 TB
+
+
+in linux
+------
+starting directory is /
+
+in windows
+c:\
+
+
+Namenode
+Datanode
+Sec Namenode
+Resource Manager
+Node Manager
+jps
+
+
+Hadoop has two main components
+1. HDFS - storage
+2. MapReduce - processing
+
+job tracker - Resource Manager
+task tracker - node manager
+
+
+Mapper - job is to filter and transform the data to the lowest logical level
+Reducer  - job is run an aggregate function on the mapper output
+
+
+Retail Store
+--------
+POS
+----
+store id, item id, qty_sold, price/unit
+
+block1
+11, 101, 10, 12
+11, 102, 20, 10
+12, 101, 20, 12
+12, 102, 30, 11
+
+block2
+11, 101, 30, 12
+11, 102, 40, 10
+12, 101, 10, 12
+12, 102, 50, 11
+
+find total qty sold for each item across all the stores
+
+101, zzzz
+102, rrrr
+
+Mapper operates always in the form of key-value pair
+
+key - item id
+value - qty sold
+
+Mapper 1		Mapper 2
+-------		--------
+101, 10		101,30
+102, 20		102,40
+101, 20		101,10
+102, 30		102, 50
+
+Combiner1		Combiner2
+--------	--------	
+101,30		101,40
+102,50		102,90
+
+101,2		101,2
+102,2		102,2
+
+sort+shuffle phase
+---------------
+101, (10, 20, 30, 10)
+102, (20, 30, 40, 50)
+
+sort+shuffle phase ( after combiners)
+---------------
+101, (30,40)
+102, (50,90)
+
+
+101,(2,2) = 4
+
+Reducer
+------
+101, (10 +20 + 30 + 10 )
+102, (20 + 30 + 40 + 50 )
+
+output file
+---------
+101, 70
+102, 140
+
+
+DataTypes in MapReduce
+
+long - LongWritables
+string - Text
+int - IntWritables
+double - DoubleWritable
+float - FloatWritable
+do not want display - NullWritable
+
+
+4 -parameters
+input key - offset number of the record - LongWritable
+input value - entire row - Text
+output key - stock_symbol - Text
+output value - long number - LongWritable
+
+
+custid,customername
+
+1001,abcd
+1002,ertyu
+
+key = 0, value = 1001,abcd
+key = 9, value=1002,ertyu
+
+output key = datatype = ? text
+output value = long = LongWritable
+
+
+Every mapper class
+1. setup
+2. map function
+3. cleanup
+
+
+following are steps to run the hadoop program
+1. write the map reduce program in eclipse
+2. convert the class files into jar file.
+3. upload the data file on hdfs
+4. run the hadoop program command
+
+syntax
+------
+hadoop jar <jar file>.jar <main class name> <hdfs path/input file> <hdfs path/new dir>
+
+hadoop jar stkvol.jar StockVolume /niit/NYSE.csv /niit/mr_output1
+
+$ jar tvf stkvol.jar
+
+hadoop fs -ls /
+
+hadoop fs -ls /niit
+
+hadoop fs -mkdir /niit
+
+hadoop fs -put NYSE.csv /niit
+
+hadoop fs -ls  (home directory - /user/hduser) = hadoop fs -ls /user/hduser
+
+hadoop fs -cat /niit/mr_output1/part-r-00000
+
+load the file it breaks down into blocks - physical division
+input splits = logical division
+
+file = 11 records
+block size = 4.5 records
+blocks = ? 4.5 + 4.5  + 2 
+
+1. input splits = 4.5 +0.5 = 5
+2nd = 4 records
+3rd = 2 records
+
+# of mappers = # of input splits
+
+file = 350 MB
+block size = 128 MB
+rec len = 50 MB
+
+Blocks = ? 128 + 128 + 44
+block1 = 50 MB + 50 MB + 28MB
+block2 = 22MB + 50 MB + 50MB + 6MB
+block3 = 44MB + 50MB
+
+
+1st Input splits = 50 + 50 + 28 + 22 = 150MB
+2nd input split = 50 + 50 + 6 + 44 = 150MB
+3rd Input split = 50 MB
+Mappers = 3
+
+
+Block1
+-----
+Book id, Book title, Author Name, date, ......
+1, ABC, John, 01.01.17
+2, EFG, Claire,05.01.17
+3, XYZ, John, 06.01.17
+
+
+find total count of books by each author
+
+final output
+----------
+John 2
+Claire 1
+
+key - author name
+value - 1
+
+Mapper output
+-------------
+John,1
+Claire,1
+John,1
+
+
+sort +shuffle
+----------
+Claire, (1)
+John, (1,1)
+
+reducer
+------
+Claire (1)
+John (2)
+
+
+Key - Writable comparable
+Value - Writables
+
+
+1. split the data from NYSE.csv to 2 blocks by creating block size = 36 MB
+2 visit the folder where the blocks are located.
+3, Mapper output - Key -Stock_symbol, Value - Stock_volume
+comment the reducer class
+setNumReduceTask(0);
+
+
+ABT,2788800
+
+
+we are doing 3 programs today
+1. running only the mapper on NYSE
+2. to show the input data as output
+3. using book file - count of books written by each author
+
+
+Word Count Program on a text file
+
+find number of occurences of each word.
+--------------------------------
+
+we are learning hadoop
+hadoop has two main components
+hdfs and mapreduce
+
+TextInputFormatClass
+inp key = offset of each line,
+inp value = full line till the end of Line not encountered
+
+final output
+---------
+hadoop, 2 (example)
+
+key - word
+value - 1
+
+we are learning hadoop
+
+we,1
+are,1
+learning,1
+hadoop,1
+hadoop,1
+has,1
+two,1
+main,1
+components,1
+
+sort + shuffle
+hadoop,(1,1)
+
+reducer
+hadoop, (1+1)
+
+final output
+hadoop,2
+
+today's program
+1. std calls - duration in min - convert date into milliseconds + data
+2. word count in a text file - mapper function
+
+we are learning hadoop
+hadoop have hdfs and mapreduce
+
+hadoop jar <jar name> <class name> <input> <output> 'have hdfs'
+
+main ()
+conf.set("any variable name" , args[2] );
+
+if 
+
+key -entire row - Text
+value -1 (IntWritable)
+
+neha_solanki
+manoj
+
+
+1. Write the code for search engine
+2. using the above code seperate the records for Exercise & Fitness (part-m-00000)
+3. find the total amount spent by each customer in the above category
+
+key - customer id - 3rd column
+value - amount - 4th column
+
+
+Combiners
+--------
+use student1 and student2 data files
+write a combiner class to count number of students in each city.
+Run without the combiner
+Check the output in the both output files
+if not same, then make the changes accordingly in the java code for the combiner class
+
+
+Partitioners
+---------
+Retail Store
+--------
+POS
+----
+store id, item id, qty_sold, price/unit
+
+block1
+11, 101, 10, 12
+11, 102, 20, 10
+12, 101, 20, 12
+12, 102, 30, 11
+11, 101, 30, 12
+11, 102, 40, 10
+12, 101, 10, 12
+12, 102, 50, 11
+
+prob statement : find total qty sold for each item id - store wise
+
+final output
+---------
+for store 11 (part-r-00000)
+----------
+101,xxxx
+102,vvvvv
+
+for store 12 (part-r-00001)
+----------
+101,xxxx
+102,vvvvv
+
+select store id, item id, sum(qty) from tbl group by store id, item id
+
+
+partition column = store id
+
+key - item id
+value - store id + qty sold 
+
+String newstr = str[0] + ',' + str[2];
+
+context.write ( new Text(str[1]), new Text(newstr));
+
+Mapper 
+------
+101, (11,10)
+102, (11,20)
+101, (12,20)
+102, (12,30) 
+101, (11,30)
+102, (11,40)
+101, (12,10)
+102, (12,50)
+
+Partition 11
+-------
+101, (11,10)
+102, (11,20)
+101, (11,30)
+102, (11,40)
+
+101, {(11,10), (11,30)}
+102, {(11,20),(11,40)}
+
+for store 11
+----------
+101, 40
+102, 60
+
+
+Partition 12
+-------
+101, (12,20)
+102, (12,30) 
+101, (12,10)
+102, (12,50)
+
+101, {(12,20),(12,10)}
+102, {(12,30),(12,50)}
+
+for store 12
+----------
+101, 30
+102, 80
+
+# of partitions = # of reducers
+
+Partitioner program
+---------------
+1. 3 data files
+2. code for partitioner class
+3. need to make changes in the output
+4. running the partitioner program on sales data to create 15 distinct categories data files
+
+Joins
+-----
+1. MapSide Join - 
+2. Reduce Side Join
+
+
+POS
+----
+store_master
+-----------
+store id, city, state,.....
+11,Mumbai,Mah
+12,Pune,Mah
+13,Chennai,TN
+14, Bangalore, KAR
+
+store id, item id, qty_sold, price/unit
+
+block1
+11, 101, 10, 12
+11, 102, 20, 10
+12, 101, 20, 12
+12, 102, 30, 11
+13, 101, 30, 12
+13, 102, 40, 10
+14, 101, 10, 12
+14, 102, 50, 11
+
+
+prob statement : 	1) find total qty sold for each item id - state wise 
+		2) find total sales done by each state
+
+
+key - item id 
+value - (qty + state)
+
+
+11, 101, 10, 12,Mah
+11, 102, 20, 10,Mah
+12, 101, 20, 12,mah
+12, 102, 30, 11,mah
+13, 101, 30, 12,TN
+13, 102, 40, 10,TN
+14, 101, 10, 12,Kar
+14, 102, 50, 11,Kar
+
+
+create a hash-map table
+------------------
+11,Mah
+12,Mah
+13,TN
+14,KAR
+
+
+Map Function
+----------
+11, 101, 10, 12
+extract store id
+var1 = 11
+
+extract the value from the hashmap table using var1=11
+mystate=Mah
+
+context.write(row, mystate)
+
+Mapper output - (part-m-00000)
+11, 101, 10, 12,Mah
+
+
+setup()
+map()
+cleanup()
+
+Employee - main table
+desig - lookup
+salary - lookup
+
+
+cp /home/sowmya/Downloads/salary.txt /home/hduser
+
+
+hadoop fs -mkdir -p /user/hduser
+
+hadoop fs -put desig.txt /user/hduser
+hadoop fs -put salary.txt /user/hduser
+
+
+
+verify the files on the home dir by the following command
+---------------------------------
+hadoop fs -ls
+
+Today assignment
+--------------
+did
+code - for Map side join
+
+------------------
+store id, item id, qty_sold, price/unit
+
+POS datafile - 2 files
+store master
+
+1) to do a map side join POS1 and POS2 with store master
+2) 2 output files as mapper output - (part-m-00000 and part-m-00001) { store id, item id, qty, price, state}
+3) using the above data as input - write 3 java programs
+prob statement : 	a) find total qty sold for each item id - state wise (using partitioning)
+			key - item id, value - (qty,state)
+		b) find total sales done by each state - with combiners
+			key - state, value - (qty x price)
+		c) one more file for costing of these products - cost sheet
+			input file = POS1 and POS2
+			create hash map table in the setup() for cost sheet
+			profit = (sp-cp) x qty_sold
+			key - item id
+			value = profit
+			context.write(item id, profit)
+			find profit for each product across all the stores.
+			use combiners
+		d) find profit for each products for each state
+			input file - part-m-00000 and part-m-00001 ( this data has state column)
+			classes - mapper class with map side join - cost sheet
+			mapper output -> 	key - item id
+					value - (profit, state)
+			partitioner -> to divide data on state level
+			reducer -> calculate all the profits for each item - state wise
+
+
+for c part   (only one program - map side join + regular coding)
+--------------------------------------------------
+Map side join with the cost sheet +POS1 and POS2 data
+profit for each transaction
+
+key item id
+value profit 
+
+profit = (sp-cp) * qty_sold
+
+context.write(item id, profit)
+
+use combiners also
+
+Reducer
+------
+101,570
+102,480
+
+
+
+
+
+for b part
+---------
+key - state
+value - qty_sold x price/unit
+
+reducer
+------
++ operator - hence combiners can be used
+
+
+HashMap Table
+--------------
+Key,Value
+1,Manager
+2,President
+
+
+Key,Value
+1,500000
+2,750000
+
+
+hadoop jar <jar> <class> <input folder or file name> <output folder>
+
+/niit/mr_output1
+
+niit/mr_output1  - /user/hduser/niit/mr_output1
+
+what is home directory on hdfs - > /user/hduser
+
+home directory on local fs --->  /home/hduser
+
+
+/user/hduser/POS/store_master
+
+/user/hduser/POS/data/POS1 and POS2
+
+POS/store_master
+
+
+/user/hduser/store_master
+
+("store_master")
+
+
+/POS/data = /POS/data
+
+POS/data = /user/hduser/POS/data
+
+run()
+{
+	setup
+while (loop)	
+	map()
+cleanup()
+}
+
+
+Existing Queries
+-------------
+1) Find out the customer I.D for the customer who has spent the maximum amount in a single transaction in each month and in all the 4 months. 
+
+There will be 5 output files. One for each month and for total 4 months.
+
+arvind: in all 4 months 01622362 ,459771
+arvind: in D01 00842419,81140
+arvind: in D11 02131269,109358
+
+key - Total sales column (9th column), 
+value - entire row
+
+
+sample data
+---------
+ABC,20
+DEF,25
+XYZ,10
+
+
+TreeMap
+25, (DEF,25)
+
+cleanup
+block 1
+key - null writable
+Value - (DEF,25)
+
+Block 2
+key - null writable
+Value - (PQR,30)
+
+sort and shuffle data
+NULL, {(DEF,25),(PQR,30)}
+
+
+Tree Map
+30, (PQR,30)
+
+
+Reducer Output
+------------
+key - null
+value (PQR,30)
+
+
+1b) Find out the customer I.D for the customer who has spent the maximum amount for all the transactions in each month and in all the 4 months. 
+
+customer, total spent by each customer
+
+Mapper class
+key custid
+value - sales
+
+sort + shuffle
+reducer
+
+reducer output should go to tree map
+if treemap.size > 1
+	remove firstkey
+
+
+cleanup
+write treemap output to context class
+
+
+
+
+
+2) Find out the top 5 products being sold in the monthly basis and in all the 4 months.. 
+
+key - prod id
+value - amount
+
+reducer - add all the amounts for each prod
+Tree Map -sort and find top 10
+
+Top Product for all the 4 months  :: 	4711588210441:491292
+		kriti		87102045008539 : 1540503
+ 
+
+hadoop fs -rmr /niit/folder_name
+
+hadoop fs -rm /niit/file_name
+
+
+3a) Find out the top 5 grossing product value wise for the age group A, B, C etc..... 
+Mapper output
+key - product id - column 6
+value - (total sales, age) ( col 9, col 3)
+
+Paritioner
+-------
+depending upon the age > sending to different sort + shuffle 
+on the basis of age data would be partitioned
+
+Reducer
+------
+need to add all the sales for each prod id
+place them in the tree map
+
+extract the top 5 in the cleanup
+
+
+3b) Find out the top 5 grossing product subclass for the age group A, B, C etc.....
+
+
+New Queries
+----------
+
+1. find number of orders placed + total sales done to each customer 
+sort the output on totalsales column descending
+
+
+Mapper
+------
+key - cust id
+value - total sales (9)
+
+reducer
+-------
+8710, (100, 101, 300....)
+sum =0 ;
+count = 0;
+for ( LongWritable val  : Value ) {
+	sum += val.get()
+	count++
+}
+
+count++
+total sales
+total count of transactions
+
+context.write(cust id, concatted string)
+
+
+
+2. count number of orders + total sales per month
+Key - null
+value - total sales
+
+
+3a. Find out the top 5 viable product for the age group A, B, C etc....
+key - product
+
+
+value (profit = total sales - total cost, age)
+
+sales = Integer.parseInt(str[x]);
+cost = Integer.parseInt(str[x]);
+int profit = sales - cost
+String myprofit = String.format("%d", profit); or String.valueOf(int)
+myvalue = str[3] + ',' + myprofit;
+
+10 output files
+
+
+
+3b. Find out the top 5 viable product subclass for the age group A, B, C etc..... 
+
+if (age == "A") or if(str[x].equals("A"))
+
+
+4) Find products list with qty, profitablity and margin %
+margin = (sales price - cost price)/cost price x 100
+output in order -- > top margin to lowest margin 
+
+final output
+---------
+Product id 	 total Qty	 total profit/loss 	Margin %
+
+
+bag1 = load '/home/hduser/retail' using PigStorage(';') as .......
+dump bag1;
+
+
+get rid of those products who are generating losses
+
+
+A	10	100	0.5%
+B	15	75	3.5% ( scope is there to reduce the selling price)
+
+Action 1 - reduced the selling price
+
+if your selling price is reduced by 10% how much was increase in sales ?
+
+Mapper output - 	key - product id
+		value - profit, qty, margin% - incorrect
+		correct values - total sales, total cost, qty
+
+Reducer		adding up all the total cost, total sales and qty for each product id
+		margin = (total sales - total cost)/ total cost  x 100
+		profit = (total sales - total cost)
+		total qty
+
+		send the output to treemap
+		key - double - margin %
+		value - text - (product id, profit, margin %, total qty)
+
+		in the cleanup descending order on key
+		reducer output key - NullWritable
+		reducer output value  - value of treemap
+
+
+
+5) find zip code wise top product or top category
+
+
+6) comparitive analysis for product on qty basis on monthly basis
+
+7) comparitive analysis for product on amount basis on monthly basis
+key - prod id
+value - nov/t (sales data)
+
+types of mappers = 4 mappers
+prod id, sales amount
+
+Reducer
+concat all the values into one string.
+mapreduce.seperator as ',' ( this is used for reducer output)
+
+final ouput of 7
+--------------
+prodid,nov_total,dec_total,jan_total,feb_total
+0002884011363  279,0,0,0
+
+0008635012177	6690,4700,3827,3536
+
+0008635012177,6690,4700,3827,3536 (data for 2nd row)
+
+0008635012177,6411,4700,3827,3536 (data for 2nd row)
+
+Raviraj: 0008635012177   3827,3536,6411,4700 (nov,dec,jan,feb) - correct
+
+0008635012177,3827,3536,6411,4700
+Venkatesh: 0008635012177,-7.60,81.30,-26.68,15.67
+
+
+prod_id {nov$8901,dec$54, nov$8675....}
+
+
+
+hadoop jar <jar name> <class name> </niit/folder/d11> </niit/folder/d12> ......<output>
+
+8) Growth cycles can be drawn on monthly basis
+1) calculating total sales for each product each month
+Nov 100
+Dec 120
+
+Growth % - (dec-nov)/nov*100 = 20% month on month basis
+
+output 
+-----
+prod id,	(growth%, growth%, growth%, avg growth%)
+
+
+
+
+9) Avg cost per unit for each product - on a monthly basis / for all the 4 months
+
+first program - > cost sheet 
+
+second program -> sort the output data on Avg cost price/unit ascending
+
+product id		Avg cost price/unit
+
+Mapper -
+key - product id
+value - total cost, qty or units
+
+
+Reducer
+-------
+add up all cost and qty 
+avg cost = totalcost/totalqty
+
+string = prod + avg cost -> value to tree map
+key for tree map - avg cost
+
+
+
+hadoop dfsadmin -safemode get
+
+
+
+output
+------
+
+
+
+Sample
+-----
+A 	10	100 = 10/unit
+A	5	60 = 12/unit
+
+total num of units = 10+5= 15
+total cost = 160
+Avg cost = 160/15
+
+
+
+
+10) Avg selling price / unit  for each product on a monthly basis / for all the 4 months
+first one  -> for calculating avg sale price / unit
+second program for sorting
+
+
+
+
+
+
+11) Area wise - customer pattern
+
+
+12) Day wise sales - from Sunday to Saturday with % This will help the company to identify on which days
+the sales are less. Accordingly company can make special offers on those days.
+
+Final Output
+total records - 7
+
+Day of the week 	total sales (ascending order)
+
+key - day of the week
+value - total sales 
+
+ simpleDateformat = new SimpleDateFormat("EEEE"); // the day of the week spelled out completely
+    String dayoftheweek =  simpleDateformat.format(mydate) ;
+ 
+grand total = 107840076
+
+
+Home Assignment
+-------------
+Sort the Avgcost price data on the avgcost column (4th column)
+
+key - avgcost doublewritable(str[3]);)
+value - entire row - text
+
+reducer output - null, text
+ascending
+
+
+Reduce Side Join
+-------------
+
+Production data
+------------
+prod id, qty_prod, cost/unit
+101,500,22
+102,450,23
+103,550,21
+104,600,25
+101,400,22
+102,350,23
+103,650,21
+104,500,25
+
+Sales data
+---------
+prod id, qty_sold, sale/unit
+101,600,24
+102,450,25
+103,500,25
+104,500,27
+101,400,24
+102,350,25
+103,600,25
+104,500,27
+
+prod id 		prod_qty		sales_qty
+
+using old technique
+---------------
+1. MR on prod data -{ prod id		total qty prod }
+2. MR on sales data -{ prod id		total qty sold }
+3. Map side join
+
+Using Reduce Side join
+------------------
+Mapper for prod
+------------
+101,p.500
+102,p.450
+103,p.550
+104,p.600
+101,p.400
+102,p.350
+103,p.650
+104,p.500
+
+Mapper for sales
+------------
+101,s.600
+102,s.450
+103,s.500
+104,s.500
+101,s.400
+102,s.350
+103,s.600
+104,s.500
+
+sort + shuffle
+-----------
+101, (p.500,p.400,s.600,s.400)
+102, (p.450,p.350,s.450,s.350)
+103, (p.550,p.650,s.500,s.600)
+104, (p.600,p.500,s.500,s.500)
+
+String token[] = val.get().split('.')
+
+token[0] = p
+token[1] = 500
+
+if token[0] == 'p'
+{
+  total_prod = total_prod + Integer.parseint(token[1]);
+}
+
+if token[0] == 's'
+{
+  total_sales = total_sales + Integer.parseint(token[1]);
+}
+
+
+concat -> total_prod + total sales
+
+prod id,	total_prod	total sales
+101	900		1000		high in demand
+102	800		800		same
+103	1200		1100		low in demand
+104	1100		1000		low in demand
+
+reduce side join takes one common key to join the data -> prod id
+
+
+customer name	count of number of trans	value of transactions
+John		5			1500
+
+customer
+-------
+400001,John,Mathew,45,Pilot
+
+sales file
+-------
+400001,30.66
+400001,60.33
+
+
+customer mapper
+-------------
+400001, custs	John
+
+sales mapper
+---------
+400001, txns	30.66
+400001, txns	60.33
+
+sort and shuffle
+-------------
+400001, {(custs	John),(txns	30.66),(txns	60.33)}
+
+
+
+setSortComparatorClass();
+
+
+how to calculate sentiment %
+------------------------
+2 files
+-----
+1. text data - create ur own data file - add only 10 words.( in 2 rows. leave a space after every word)
+2. afinn.txt - in setup() load the data in hashmap table
+
+Word count will gv the count of word
+
+Mapper output
+-----------
+convert every word into lower case before extracting the value
+in mapper class u need to use toLowerCase()
+
+key - "positive" or "negative"
+value (value of each word using Afinn.txt)
+
+neg num * (-1)
+
+for either negative or positive word value will always be positive only
+
+if the word is not found in dictionary then give (positive, 0)
+
+if ( hashMap.get(hashKey) != null ) 
+	myvalue = hashMap.get(hashKey); 
+else
+	myvalue = 0;
+
+Example of Mapper output
+--------------------
+positive, 5
+positive, 3
+negative, -2  ---this is wrong
+negative, 3
+negative, 2
+positive, 2
+
+sentiment % = (pos-neg)/(pos+neg)
+
+
+setup
+map
+cleanup
+
+
+setup
+reduce
+cleanup
+
+positive
+negative
+
+
+weightage of net positive words / total weightage * 100
+
+positive 	10-25 - 	low
+	25-50	medium
+	50-75	good
+	75-100	highly positive
+
+compare this data with election results
+
+you can draw a pattern
+
+social media analysis
+
+you can take your own whatsapp data. save it and run the program on that data
+
+Stop words --, . 
+
+contains and remove
+
+bad
+
+bad,
+ 
+input to the sequence file
+-----------------------
+filepath, bytearray of the image
+
+string var1 = calculateMD5(bytearray of the image)
+
+
+context.write(var1, filepath)
+
+
+Mapper output
+-----------
+ihwqwdqiwndbnsd	/images/auto_loan.png
+3434nscnsmdnck	/images/blur1.jpg
+7734snkbvrrrrrr	/images/flower.jpg
+7734snkbvrrrrrr	/images/flower1.jpg
+7734snkbvrrrrrr	/images/flower2.jpg
+
+
+sort and shuffle
+7734snkbvrrrrrr, {/images/flower.jpg, /images/flower1.jpg, /images/flower2.jpg}
+
+
+Hive
+---
+1. data on hdfs in form of blocks
+2. internal database to hold the structure of the table - Derby
+
+Hive Managed Tables
+
+select * from table
+
+hive 1.2.1 to hadoop 2.6.0
+
+A. sales and customer table
+----------------------
+1a) find total number of customers for each profession (without indexing)
+1b) find total number of customers for each profession (with indexing)
+
+2) find the total count of customer who do not have any profession; (83)
+
+3) find out the top ten buyers from the sales data along with their personal details
+
+4) find the total sales of each type with their respective % - transaction table
+cash	cash total		cash % to totalsales (3.67%)
+credit	credit total	credit % to totalsales (96.33%)
+
+
+B .create for NYSE table
+-----------------
+1. find the max stock variance for each stock
+
+2. find total stock volume for each stock
+
+
+C.pickup the output file from MapReduce job - Margin program
+------------------------------
+create an external table on this output data - 23812 records
+(product id,  total qty, profit, margin %)
+
+1. total net profit (16163257)
+2. find profit % for those products who are having margin more than 10% -  (profit / gross total profit) x 100
+3. total volume of business(qty) for those products whose margin more than 10%
+4. find gross profit  16634804
+5. find gross loss  (-471547)
+6. find (gross loss / gross profit * 100) % [This output should be as less as possible]
+
+471547/16634804 * 100 = 2.83%
+
+for every 100 ruppee making a profit, u incurring losses on diff products 2.83. hence u are making
+100-2.83 = 97.17
+
+SIZE(`_offsets`)
+
+
+Partitions and Bucketing
+-------------------
+
+create table petrol (distributer_id STRING, distributer_name STRING, amt_IN STRING, amt_OUT STRING, vol_IN INT, vol_OUT INT, year INT) row format delimited fields terminated by ‘,’ stored as textfile;
+
+load data local inpath ‘/home/hduser/petrol.txt’ into table petrol;
+
+create table petrol1 (distributer_id STRING, distributer_name STRING, amt_IN Int, amt_OUT int, vol_IN INT, vol_OUT INT, year INT) row format delimited fields terminated by ‘,’ stored as textfile;
+
+insert overwrite table petrol1 select distributer_id, distributer_name, regexp_replace(amt_IN, "$", "") , regexp_replace(amt_OUT, "$", ""), 
+vol_IN, vol_OUT, year from petrol;
+
+
+command to enter the local mode of pig
+--------------------------------
+pig -x local
+
+HDFS mode
+---------
+pig or pig -x mapreduce
+
+
+Steps to process the data in pig
+
+1. load the raw data in pig environment
+2. Filter the data 
+3. Run the Mapper on the filtered data
+4. Reducer on the mapper output
+5. Storing the results on fs
+
+To calculate the count of customers for each profession
+
+select profession, count(*) from tbl group by profession
+custs
+
+Find the top ten buyer list with their details
+-----------------------------------
+1. load the sales/txns data
+2. group the input data on custno
+3. sum the amount for all the tuples for each cust
+
+custno	totalsales
+400001	2000
+400002	1500
+
+4. order the data on totalsales desc
+5 limit 10
+6. join this data with the cust
+
+
+cash and credit %
+--------------
+cash	totalsalesbycash			% on totalsales 
+credit	totalsalesbycreditcard		% on totalsales
+
+1. load the txn data
+txn = load
+
+2. group on type
+groupbytype = group txn by type;
+
+
+3. type	totalpaymentbytype
+salesbytype = foreach groupbytype generate group as type, SUM(txn.amount) as typetotal;
+
+dump salesbytype
+
+cash	187685.51
+credit	4923134.93
+
+totalsalesgroup = group salesbytype all;
+dump totalsalesgroup;
+describe totalsalesgroup
+
+all, {(cash	 187685.51),(credit  4923134.93) }
+
+totalsales = foreach totalsalesgroup generate SUM(columnname.nestedcolumn) as mytotal;
+dump totalsales;
+
+5110820.54
+
+A = foreach salesbytpe generate $0, $1, ($1/totalsales.mytotal)*100
+dump A;
+
+4 group all comand
+5. run the reducer - totalsales
+6 foreach command 
+
+$ <mode> <filename>
+$ pig -x local author.pig
+
+
+1.NYSE data - [max variance for each stock]
+
+2.Chinese Retail
+
+medical claim data
+weblog
+gateway
+
+In your word count also have upper case words and comma
+
+DATA
+Data
+data
+data,
+
+
+data,4
+
+please make changes in the word count program
+
+LOWER()
+REPLACE()
+
+words = FOREACH myinput GENERATE FLATTEN(TOKENIZE(REPLACE(LOWER(TRIM(line)),'[\\p{Punct},\\p{Cntrl}]',''))) AS word;
+
+Hadoop is use for analyse data. 
+hadoop stores all data........
+
+hadoop,2
+data,2
+
+Log data
+-------
+Info - files or bags
+Error
+Warn
+Fatal
+
+Machine room
+-----------
+union
+split
+udf
+parameters
+
+Amazon Website
+------------
+category tbl	product tbl	attr tbl
+----------	--------	------	
+cat id		prod id		attr id
+cat name		name		name
+		cat id		prod id
+		vendor id		price
+				qoh
+
+select * from attr tbl a, product b join on these tables
+250 million individual items
+
+join is a biggest bottleneck
+1.create a single table with all the relevant pertaining to a query - No relation 
+2.create a single record for each key (row key) product id and store all the data in that row
+3.divide this on mutliple machines (Distributing Storage)
+4.table have to be indexed on the product id
+5.the schema for each row would defined by the user at runtime.
+6.Bigger part of the data is cached. (memory) 
+7.data replication
+column name - key
+data in the column - value
+8. Different types of data can be stored in a NOSQL table
+(unstructured, semi and structured)
+9. Data is redundant . It is NOT normalised
+10. In hive or a pig we have WORM (Write Once Read Mutliple) but in NOSql
+Write Few Read Multiple
+
+
+V/s
+
+SQL
+1. Joins
+2. Group by
+
+
+
+
+prod id 1-10000 node number 1
+prod id 10001-20000 node number 2
+
+15255
+
+
+web application data is not static, it is dynamic
+
+create index first 
+partition the data
+
+
+google search engine
+Big Table
+
+pl check for total number of records in H1-B table
+-------------------
+3002458
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+input splits
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
